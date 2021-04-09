@@ -58,13 +58,19 @@ public class NormalizedChemaCreator {
 	
 	
 	public static void createIndexes(Connection connection) {
+		String indexName;
+		String tableName;
+		String createIndex;
+		String columnName;
+		String createIndexPattern;
+		Statement stmt;
 		
+		/*
 		String indexName = "Customer_Index_C_TAX_ID";
 		String tableName = "CUSTOMER";
 		String createIndex = "drop index if exists [Customer_Index_C_TAX_ID] on [dbo].[CUSTOMER];\r\n" + 
 				"		create nonclustered index [Customer_Index_C_TAX_ID] on [dbo].[CUSTOMER] ([C_TAX_ID]);";
 
-		Statement stmt;
 		
 		try {
 			stmt = connection.createStatement();
@@ -77,11 +83,12 @@ public class NormalizedChemaCreator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		*/
 		
-		String columnName = "CA_C_ID";
+		columnName = "CA_C_ID";
 		indexName = "Customer_Account_Index_CA_C_ID";
 		tableName = "CUSTOMER_ACCOUNT";
-		String createIndexPattern = "drop index if exists [#2#] on [dbo].[#1#];\r\n" + 
+		createIndexPattern = "drop index if exists [#2#] on [dbo].[#1#];\r\n" + 
 				"		create nonclustered index [#2#] on [dbo].[#1#] ([#3#]);";
 		
 		createIndex = createIndexPattern.replace("#1#",  tableName);

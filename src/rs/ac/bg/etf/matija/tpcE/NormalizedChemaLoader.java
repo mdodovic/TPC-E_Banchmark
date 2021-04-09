@@ -3,6 +3,8 @@ package rs.ac.bg.etf.matija.tpcE;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.List;
 
 public class NormalizedChemaLoader {
 
@@ -10,12 +12,22 @@ public class NormalizedChemaLoader {
 	
 
 	public static void loadData(Connection connection) {
+		
+		List<String> listOfTableWithData = new LinkedList<String>();
+		listOfTableWithData.add("CUSTOMER_ACCOUNT");
+		listOfTableWithData.add("HOLDING_SUMMARY");
+		listOfTableWithData.add("LAST_TRADE");
+		
+		
 		String bulkLoadPattern = "BULK INSERT tpcE.dbo.#1# \r\n" + 
 				"FROM '" + pathToData + "#2#" + ".txt' \r\n" + 
 				"WITH (BATCHSIZE = 20000, FIELDTERMINATOR = '|', ROWTERMINATOR = '\\n') \r\n";
 
-		//String[] tables = new String[] {"CHARGE", "TRADE_TYPE", "NEWS_ITEM", "CASH_TRANSACTION"};
 		for(String tableName : MainTPCE.tableNames) {
+			
+			if(!listOfTableWithData.contains(tableName))
+				continue;
+			
 			String[] name = tableName.split("_");
 			
 			String fileName = name[0].substring(0, 1) + name[0].substring(1).toLowerCase();

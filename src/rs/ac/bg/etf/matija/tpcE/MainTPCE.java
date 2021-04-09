@@ -1,6 +1,21 @@
 package rs.ac.bg.etf.matija.tpcE;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
+import java.util.stream.Stream;
+
+
+import rs.ac.bg.etf.matija.dataCreation.DataT2T3T8;
+import rs.ac.bg.etf.matija.tpcE.transactions.CustomerPositionTransaction2;
+import rs.ac.bg.etf.matija.tpcE.transactions.MarketFeedTransaction3;
+import rs.ac.bg.etf.matija.tpcE.transactions.TradeResultTransaction8;
 
 
 public class MainTPCE {
@@ -41,13 +56,14 @@ public class MainTPCE {
 			"TRADE_TYPE"		
 		};
 
+	public static final String customerPositionFile = "customer_position_mix_1k.sql";
+	public static final String marketFeedFile = "market_feed_mix.sql";
+	public static final String tradeResultFile = "trade_result_mix.sql";
+	
 	private int status;
 
 	private Connection connection;
 	
-
-	
-
 	public MainTPCE(Connection connection) {
 		this.connection = connection;
 	}
@@ -101,85 +117,140 @@ public class MainTPCE {
 
 	}
 	
-	public void startTradeResult(long acct_id, double se_amount) {
+	public void startTradeResult(long acct_id, String symbol, int hs_qty, int trade_qty, double se_amount, int trNum) {
 		
 		TradeResultTransaction8 T8 = new TradeResultTransaction8(this.connection,
-				acct_id ,se_amount);
+				acct_id, symbol, hs_qty, trade_qty, se_amount);
 		
 		// Transaction:
-
+		// Frame 1:
+		// Frame 2:
+		if(trNum == 2)
+			T8.invokeTradeResultFrame2();
+		// Frame 3:
+		// Frame 4:
+		// Frame 5:
 		// Frame 6:
-		T8.invokeTradeResultFrame6();
+		if(trNum == 6)
+			T8.invokeTradeResultFrame6();
 
 	}
 	
-	public void startTransactionMixture() {
+	public void startTransactionMixture(String pathToData, PrintWriter timestamp, PrintWriter difference) {
+
+		long totalLineCounter = 0;
+		try (Stream<String> stream = Files.lines(Paths.get(DataT2T3T8.pathToFile), StandardCharsets.UTF_8)) {
+			totalLineCounter = stream.count();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		long readTransactionCounter = 0;
+		long writeTransactionCounter = 0;
+
+		long lineCounter = 0;
 		long currentTime = System.currentTimeMillis();
 		
-		// data!
-/*		long cust_id = 0; // 4300001645L;
-		String tax_id = "616NU4395SX314";
-		int get_history = 0;
-		int acct_idx = 3;
-*/
-		long cust_id = 0;
-		String tax_id = "916PV7558WK395";
-		int get_history = 0;
-		int acct_idx = -1;
+		timestamp.write("" + System.currentTimeMillis() + "\n");
 		
-		startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
+		try (FileReader fr = new FileReader(pathToData);
+			BufferedReader br = new BufferedReader(fr)){
+			String s;
+			while((s = br.readLine()) != null){
+				String[] parsedTransaction = s.split(" ");
+				
+				if ("CustomerPositionFrame1".equals(parsedTransaction[1])) {
 
-		
-		// data!
-		double[] price_quote = {-30.0, -35.0, -18.9};
-		String status_submitted = "";
-		String[] symbol = {"AA", "AACB", "AACBPRA" };
-		long[] trade_qty = {-2,-3,-4};
-//		String type_limit_buy = "";
-//		String type_limit_sell = "";
-//		String type_stop_loss = "";
-//		int unique_symbols;
-		
-		startMarketFeedTransaction(price_quote, status_submitted, symbol, trade_qty, "", "", "");
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
-		// data!
-		// for frame 6:!?
-		
-		long acct_id = 43000016443l;
-		double se_amount = -100000.0;
-		
-		startTradeResult(acct_id, se_amount);
-		
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
+					String[] data = parsedTransaction[2].split(",");
+					long cust_id = Long.parseLong(data[0]);
+					String tax_id = data[1];
+					int get_history = 0;
+					int acct_idx = -1;
+//					System.out.println(cust_id + ", " + tax_id + ", " +  get_history + ", " + acct_idx);
+
+					long startTransaction = System.currentTimeMillis();
+
+					startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
+
+					difference.write("" + (System.currentTimeMillis() - startTransaction) + "\n");
+					//System.out.println((System.currentTimeMillis() - startTransaction));
+					readTransactionCounter++;
+
+				} 
+				if ("MarketFeedFrame1".equals(parsedTransaction[1])) {
+
+					String[] data = parsedTransaction[2].split(",");
+
+					double[] price_quote = new double[] {Double.parseDouble(data[0])};
+					String status_submitted = data[1];
+					String[] symbol = new String[]{data[2]};
+					long[] trade_qty = new long[] {Long.parseLong(data[3])};
+					String type_limit_buy = "";
+					String type_limit_sell = "";
+					String type_stop_loss = "";
+					
+					long startTransaction = System.currentTimeMillis();
+					
+					startMarketFeedTransaction(price_quote, status_submitted, 
+							symbol, trade_qty, type_limit_buy, type_limit_sell,type_stop_loss);					
+
+					difference.write("" + (System.currentTimeMillis() - startTransaction) + "\n");
+
+					writeTransactionCounter++;
+				}
+				if ("TradeResultFrame2".equals(parsedTransaction[1])) {
+
+					String[] data = parsedTransaction[2].split(",");
+					
+					long acct_id = Long.parseLong(data[0]);
+					int hs_qty = Integer.parseInt(data[1]);				
+					String symbol = data[2];
+					int trade_qty = Integer.parseInt(data[3]);
+
+					long startTransaction = System.currentTimeMillis();
+					
+					startTradeResult(acct_id, symbol, hs_qty, trade_qty, -1., 2);
+
+					difference.write("" + (System.currentTimeMillis() - startTransaction) + "\n");
+					
+					writeTransactionCounter++;
+				} 					
+				if ("TradeResultFrame6".equals(parsedTransaction[1])) {
+
+					String[] data = parsedTransaction[2].split(",");
+					long acct_id = Long.parseLong(data[0]);
+					double se_amount = Double.parseDouble(data[1]);
+
+					long startTransaction = System.currentTimeMillis();
+					
+					startTradeResult(acct_id, "", -1, -1, se_amount, 6);
 	
-		startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
+					difference.write("" + (System.currentTimeMillis() - startTransaction) + "\n");
 
-		startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
+					writeTransactionCounter++;
+				} 					
+				lineCounter ++;
+				if(lineCounter % 1000 == 0) {
+					System.out.println("Finished " + 
+							String.format("%.2f", 100. * lineCounter / totalLineCounter) 
+							+ "% transactions ( w: " + writeTransactionCounter + 
+							"; r: " + readTransactionCounter + ")");
+				}
+				timestamp.write("" + System.currentTimeMillis() + "\n");
 
-		startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
-		
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
+		System.out.println("Finish after: " + currentTime + " milisecunds");
+
+		System.out.println("Read transactions: " + readTransactionCounter);
+		System.out.println("Write transactions: " + writeTransactionCounter);
 		
-		startCustomerPositionTransaction(cust_id, tax_id, get_history, acct_idx);
-		
-		currentTime = System.currentTimeMillis() - currentTime;
-		System.out.println(currentTime);
 	}
-	
-
 
 }
