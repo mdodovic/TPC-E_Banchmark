@@ -11,7 +11,7 @@ public class MainData {
 		// T2T3T8 Data creation:
 		
 		DataT2T3T8 data = new DataT2T3T8(database.getConnection());
-		data.dataGenerationT3T8WriteOnly();
+		data.dataGenerationT2ReadOnly();
 
 		System.out.println("Transaction mix (" + DataT2T3T8.totalLineCount + " transactions) creattion ... finished");
 	}

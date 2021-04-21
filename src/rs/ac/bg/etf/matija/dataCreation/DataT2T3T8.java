@@ -14,14 +14,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.stream.Stream;
-
-import rs.ac.bg.etf.matija.tpcE.MainTPCE;
-
+import rs.ac.bg.etf.matija.main.Main;
 public class DataT2T3T8 {
 
 	private Connection databaseConnection;
 	
-	public static final String pathToFile = "T2T3T8_read_only_1m3kcp.sql";	
+	public static final String customerPositionFile = "customer_position_mix_130k.sql";
+	
+
+	// this is also output file for data generation
+
 	public static long totalLineCount = 0;
 	public static long readLineCount = 0;
 	public static long writeLineCount = 0;
@@ -31,7 +33,7 @@ public class DataT2T3T8 {
 	public DataT2T3T8(Connection connection) {
 		this.databaseConnection = connection;	
 
-		try (Stream<String> stream = Files.lines(Paths.get(MainTPCE.customerPositionFile), StandardCharsets.UTF_8)) {
+		try (Stream<String> stream = Files.lines(Paths.get(customerPositionFile), StandardCharsets.UTF_8)) {
 			innerLineCount = stream.count();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -41,9 +43,9 @@ public class DataT2T3T8 {
 
 	public String dataGenerationT2ReadOnly() {
 		
-		try (FileReader fr = new FileReader(MainTPCE.customerPositionFile);
+		try (FileReader fr = new FileReader(customerPositionFile);
 			BufferedReader br = new BufferedReader(fr);
-			FileWriter fw = new FileWriter(DataT2T3T8.pathToFile);
+			FileWriter fw = new FileWriter(Main.inputDataFile);
 			PrintWriter pw = new PrintWriter(fw)){
 
 			long cust_id;
@@ -79,16 +81,16 @@ public class DataT2T3T8 {
 		System.out.println("Write transactions: " + String.format("%.2f", 100. * writeLineCount / totalLineCount));
 		System.out.println("Read transactions: " + String.format("%.2f", 100. * readLineCount / totalLineCount));
 
-		return DataT2T3T8.pathToFile;		
+		return Main.inputDataFile;		
 	}
 	
 	
 
 	public String dataGenerationT3T8WriteOnly() {
 		
-		try (FileReader fr = new FileReader(MainTPCE.customerPositionFile);
+		try (FileReader fr = new FileReader(customerPositionFile);
 				BufferedReader br = new BufferedReader(fr);
-				FileWriter fw = new FileWriter(pathToFile);
+				FileWriter fw = new FileWriter(Main.inputDataFile);
 				PrintWriter pw = new PrintWriter(fw)){
 
 				long cust_id;
@@ -127,7 +129,7 @@ public class DataT2T3T8 {
 			System.out.println("Read transactions: " + String.format("%.2f", 100. * readLineCount / totalLineCount));
 
 			
-			return pathToFile;
+			return Main.inputDataFile;
 		
 	}
 
@@ -135,9 +137,9 @@ public class DataT2T3T8 {
 
 //		3.	N read transakcija pa onda 1 write blok ova (da se namesti da bude ~50% read/write transackija)
 
-		try (FileReader fr = new FileReader(MainTPCE.customerPositionFile);
+		try (FileReader fr = new FileReader(customerPositionFile);
 			BufferedReader br = new BufferedReader(fr);
-			FileWriter fw = new FileWriter(pathToFile);
+			FileWriter fw = new FileWriter(Main.inputDataFile);
 			PrintWriter pw = new PrintWriter(fw)				
 				){
 
@@ -157,7 +159,7 @@ public class DataT2T3T8 {
 					long readCnt = 0;
 					if(cnt % 12 == 0) {
 						
-						try (FileReader frInner = new FileReader(MainTPCE.customerPositionFile);
+						try (FileReader frInner = new FileReader(customerPositionFile);
 								BufferedReader brInner = new BufferedReader(frInner);){
 							
 							String sInner;
@@ -202,7 +204,7 @@ public class DataT2T3T8 {
 		System.out.println("Read transactions: " + String.format("%.2f", 100. * readLineCount / totalLineCount));
 
 		
-		return pathToFile;
+		return Main.inputDataFile;
 
 	}
 
@@ -211,9 +213,9 @@ public class DataT2T3T8 {
 
 //		2.	1 read transakcija – 1 write blok za tu transakciju , pa kad se sve izredjaju onda se ponove još jedno sve read transakcije.
 
-		try (FileReader fr = new FileReader(MainTPCE.customerPositionFile);
+		try (FileReader fr = new FileReader(customerPositionFile);
 			BufferedReader br = new BufferedReader(fr);
-			FileWriter fw = new FileWriter(pathToFile);
+			FileWriter fw = new FileWriter(Main.inputDataFile);
 			PrintWriter pw = new PrintWriter(fw)				
 				){
 
@@ -259,7 +261,7 @@ public class DataT2T3T8 {
 		System.out.println("Read transactions: " + String.format("%.2f", 100. * readLineCount / totalLineCount));
 
 		
-		return pathToFile;
+		return Main.inputDataFile;
 
 	}
 
@@ -269,9 +271,9 @@ public class DataT2T3T8 {
 
 //		1.	ceo blok read transakcija ponavljam nakon svakog pojedinacnog write blok (1 write blok je sve write transakcije koje se odnose na 1 T2 read transakciju)
 
-		try (FileReader fr = new FileReader(MainTPCE.customerPositionFile);
+		try (FileReader fr = new FileReader(customerPositionFile);
 			BufferedReader br = new BufferedReader(fr);
-			FileWriter fw = new FileWriter(pathToFile);
+			FileWriter fw = new FileWriter(Main.inputDataFile);
 			PrintWriter pw = new PrintWriter(fw)				
 				){
 
@@ -289,7 +291,7 @@ public class DataT2T3T8 {
 					long readCnt = 0;
 					long writeCnt = 0;
 					
-					try (FileReader frInner = new FileReader(MainTPCE.customerPositionFile);
+					try (FileReader frInner = new FileReader(customerPositionFile);
 							BufferedReader brInner = new BufferedReader(frInner);){
 						
 						String sInner;
@@ -335,7 +337,7 @@ public class DataT2T3T8 {
 		System.out.println("Read transactions: " + String.format("%.2f", 100. * readLineCount / totalLineCount));
 
 		
-		return pathToFile;
+		return Main.inputDataFile;
 
 	}
 
